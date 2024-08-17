@@ -9,7 +9,7 @@ const TransactionErrorMessage: React.FunctionComponent<
   TransactionErrorMessageProps
 > = ({ message, dismiss }) => {
   return (
-    <div>
+    <div style={{color:"red"}} >
       TX error: {message}
       <button type="button" onClick={dismiss}>
         <span aria-hidden="true">&times;</span>

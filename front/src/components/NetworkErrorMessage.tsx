@@ -9,7 +9,7 @@ const NetworkErrorMessage: React.FunctionComponent<
   NetworkErrorMessageProps
 > = ({ message, dismiss }) => {
   return (
-    <div>
+    <div style={{color:"red"}} >
       {message}
       <button type="button" onClick={dismiss}>
         <span aria-hidden="true">&times;</span>
