@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect, FormEvent } from "react";
 import { ethers } from "ethers";
-import { MusicShop } from "@/typechain"
 
 import { AlbumProps } from "./types/AlbumProps";
 import { CurrentConnectionProps } from "./types/CurrentConnectionProps";
@@ -16,6 +15,8 @@ import AddAlbumForm from "@/components/AddAlbumForm";
 import useAddAlbum from "@/hooks/useAddAlbum";
 import useBuyAlbum from "@/hooks/useBuyAlbum";
 
+import { allAlbumsMapper } from "@/utils/allAlbumsMapper";
+
 export default function Home() {
   const [networkError, setNetworkError] = useState<string>();
   const [transactionError, setTransactionError] = useState<any>();
@@ -24,19 +25,6 @@ export default function Home() {
   const [albums, setAlbums] = useState<AlbumProps[]>([]);
   const [currentConnection, setCurrentConnection] = useState<CurrentConnectionProps>();
 
-  function allAlbumsMapper(albums: MusicShop.AlbumStructOutput[]) {
-    return albums.map(
-      (album): AlbumProps => {
-        return {
-          index: album[0].toString(),
-          uid: album[1],
-          title: album[2],
-          price: album[3],
-          quantity: album[4],
-        };
-      })
-  }
-  
   useEffect(() => {
     (async () => {
       if (currentConnection?.shop && currentConnection.signer) {
