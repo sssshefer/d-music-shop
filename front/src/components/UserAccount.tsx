@@ -1,6 +1,7 @@
 import React from "react";
 import { CurrentConnectionProps } from "@/app/types/CurrentConnectionProps";
 import ConnectWallet from "./ConnectWallet";
+import { ethers } from "ethers";
 
 type UserAccountProps = {
     currentConnection: CurrentConnectionProps | undefined;
@@ -8,7 +9,8 @@ type UserAccountProps = {
     resetState: () => void;
     dismissNetworkError: React.MouseEventHandler<HTMLButtonElement>;
     networkError: string | undefined;
-    setCurrentConnection:React.Dispatch<React.SetStateAction<CurrentConnectionProps | undefined>>
+    setCurrentConnection:React.Dispatch<React.SetStateAction<CurrentConnectionProps | undefined>>,
+    currentBalance:string|undefined
 };
 
 const UserAccount:
@@ -18,7 +20,8 @@ const UserAccount:
         networkError,
         setNetworkError,
         resetState,
-        setCurrentConnection
+        setCurrentConnection,
+        currentBalance
 
     }) => {
         return (
@@ -37,6 +40,9 @@ const UserAccount:
                 {currentConnection?.signer && (
                     <p>Your address: {currentConnection.signer.address}</p>
                 )}
+                {currentBalance && (
+        <p>Your balance: {ethers.formatEther(currentBalance)} ETH</p>
+      )}
             </div>
         );
     };

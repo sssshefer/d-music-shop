@@ -10,6 +10,7 @@ import UserAccount from "@/components/UserAccount";
 import { AlbumProps } from "./types/AlbumProps";
 import { CurrentConnectionProps } from "./types/CurrentConnectionProps";
 import useAddAlbum from "@/hooks/useAddAlbum";
+import AlbumsList from "@/components/AlbumsList";
 
 export default function Home() {
   const [networkError, setNetworkError] = useState<string>();
@@ -138,46 +139,35 @@ export default function Home() {
       setTxBeingSent(undefined);
     }
   };
-  const availableAlbums = () => {
-    const albumsList = albums.map((album) => {
-      return (
-        <li key={album.uid}>
-          <>
-            {album.title} (#{album.index.toString()})<br />
-            Price: {album.price.toString()}
-            <br />
-            Items left: {album.quantity.toString()}
-            <br />
-            {BigInt(album.quantity) > BigInt(0) && (
-              <button onClick={(e) => handleBuyAlbum(album, e)}>
-                Buy 1 copy
-              </button>
-            )}
-          </>
-        </li>
-      );
-    });
 
-    return albumsList;
-  };
+
+
 
   return (
     <main>
-      <UserAccount currentConnection={currentConnection} setNetworkError={setNetworkError} resetState={resetState} dismissNetworkError={dismissNetworkError}
-        networkError={networkError} setCurrentConnection={setCurrentConnection} />
-      {txBeingSent && <WaitingForTransactionMessage txHash={txBeingSent} />}
-      {transactionError && (
+      <UserAccount
+        currentConnection={currentConnection}
+        setNetworkError={setNetworkError}
+        resetState={resetState}
+        dismissNetworkError={dismissNetworkError}
+        networkError={networkError}
+        setCurrentConnection={setCurrentConnection}
+        currentBalance={currentBalance}
+      />
+
+      {txBeingSent &&
+        <WaitingForTransactionMessage txHash={txBeingSent} />}
+
+      {transactionError &&
         <TransactionErrorMessage
           message={getRpcErrorMessage(transactionError)}
           dismiss={dismissTransactionError}
         />
-      )}
-      {currentBalance && (
-        <p>Your balance: {ethers.formatEther(currentBalance)} ETH</p>
-      )}
+      }
 
-      {albums.length > 0 && <ul>{availableAlbums()}</ul>}
 
+      <AlbumsList albums={albums} handleBuyAlbum={handleBuyAlbum} />
+      
       {isOwner && !txBeingSent && (
         <form onSubmit={addAlbum}>
           <h2>Add album</h2>
