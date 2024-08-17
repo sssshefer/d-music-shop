@@ -30,7 +30,14 @@ const AlbumsList: React.FunctionComponent<AlbumsListProps> = ({ albums, handleBu
 
     return (
         <div >
-            {albums.length > 0 && <ul>{availableAlbums()}</ul>}
+            {albums.length > 0 && 
+            <>       
+                  <h2>Available Albums</h2>
+
+                 <ul>{availableAlbums()}</ul>
+
+            </>
+            }
         </div>
     );
 }

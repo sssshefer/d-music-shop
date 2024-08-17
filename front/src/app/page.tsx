@@ -112,7 +112,6 @@ export default function Home() {
           dismiss={dismissTransactionError}
         />
       }
-
       <AlbumsList albums={albums} handleBuyAlbum={handleBuyAlbum} />
 
       {isOwner && !txBeingSent && (

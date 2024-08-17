@@ -45,6 +45,7 @@ const UserAccount:
           }, [currentConnection, txBeingSent])
         return (
             <div >
+              <h2>User Account</h2>
                 {!currentConnection?.signer && (
                     <ConnectWallet
                         networkError={networkError}
