@@ -2,16 +2,18 @@
 
 import React, { useState, useEffect, FormEvent } from "react";
 import { ethers } from "ethers";
-import WaitingForTransactionMessage from "@/components/WaitingForTransactionMessage";
-import TransactionErrorMessage from "@/components/TransactionErrorMessage";
-import "./style.css"
-import UserAccount from "@/components/UserAccount";
+import { MusicShop } from "@/typechain"
 
 import { AlbumProps } from "./types/AlbumProps";
 import { CurrentConnectionProps } from "./types/CurrentConnectionProps";
-import useAddAlbum from "@/hooks/useAddAlbum";
+
+import WaitingForTransactionMessage from "@/components/WaitingForTransactionMessage";
+import TransactionErrorMessage from "@/components/TransactionErrorMessage";
+import UserAccount from "@/components/UserAccount";
 import AlbumsList from "@/components/AlbumsList";
 import AddAlbumForm from "@/components/AddAlbumForm";
+
+import useAddAlbum from "@/hooks/useAddAlbum";
 import useBuyAlbum from "@/hooks/useBuyAlbum";
 
 export default function Home() {
@@ -20,30 +22,30 @@ export default function Home() {
   const [txBeingSent, setTxBeingSent] = useState<string>();
   const [isOwner, setIsOwner] = useState<boolean>(false);
   const [albums, setAlbums] = useState<AlbumProps[]>([]);
-
   const [currentConnection, setCurrentConnection] = useState<CurrentConnectionProps>();
 
+  function allAlbumsMapper(albums: MusicShop.AlbumStructOutput[]) {
+    return albums.map(
+      (album): AlbumProps => {
+        return {
+          index: album[0].toString(),
+          uid: album[1],
+          title: album[2],
+          price: album[3],
+          quantity: album[4],
+        };
+      })
+  }
+  
   useEffect(() => {
     (async () => {
       if (currentConnection?.shop && currentConnection.signer) {
-        const newAlbums = (await currentConnection.shop.allAlbums()).map(
-          (album): AlbumProps => {
-            return {
-              index: album[0].toString(),
-              uid: album[1],
-              title: album[2],
-              price: album[3],
-              quantity: album[4],
-            };
-          }
-        );
+        const newAlbums = allAlbumsMapper(await currentConnection.shop.allAlbums())
 
-        setAlbums((albums) => [...albums, ...newAlbums]);
-
+        setAlbums(newAlbums);
         setIsOwner(
           ethers.getAddress(await currentConnection.shop.owner()) ===
           (await currentConnection.signer.getAddress())
-
         )
       }
     })()
@@ -89,7 +91,7 @@ export default function Home() {
       event
     });
 
-  const handleBuyAlbum = async (album:AlbumProps, event:FormEvent<HTMLFormElement>) =>
+  const handleBuyAlbum = async (album: AlbumProps, event: FormEvent<HTMLFormElement>) =>
     useBuyAlbum({
       album,
       albums,
