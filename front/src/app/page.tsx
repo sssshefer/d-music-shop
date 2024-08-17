@@ -18,27 +18,10 @@ export default function Home() {
   const [networkError, setNetworkError] = useState<string>();
   const [transactionError, setTransactionError] = useState<any>();
   const [txBeingSent, setTxBeingSent] = useState<string>();
-  const [currentBalance, setCurrentBalance] = useState<string>();
   const [isOwner, setIsOwner] = useState<boolean>(false);
   const [albums, setAlbums] = useState<AlbumProps[]>([]);
 
   const [currentConnection, setCurrentConnection] = useState<CurrentConnectionProps>();
-
-  useEffect(() => {
-    (async () => {
-      if (currentConnection?.provider && currentConnection.signer) {
-        setCurrentBalance(
-          (
-            await currentConnection.provider.getBalance(
-              currentConnection.signer.address,
-              await currentConnection.provider.getBlockNumber()
-            )
-          ).toString()
-
-        )
-      }
-    })();
-  }, [currentConnection, txBeingSent])
 
   useEffect(() => {
     (async () => {
@@ -75,7 +58,6 @@ export default function Home() {
     });
     setTxBeingSent(undefined);
     setTransactionError(undefined);
-    setCurrentBalance(undefined);
     setIsOwner(false);
     setAlbums([])
   };
@@ -128,7 +110,7 @@ export default function Home() {
         dismissNetworkError={dismissNetworkError}
         networkError={networkError}
         setCurrentConnection={setCurrentConnection}
-        currentBalance={currentBalance}
+        txBeingSent={txBeingSent}
       />
 
       {txBeingSent &&

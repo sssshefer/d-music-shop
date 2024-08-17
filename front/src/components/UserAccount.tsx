@@ -1,4 +1,4 @@
-import React from "react";
+import React, {useState, useEffect} from "react";
 import { CurrentConnectionProps } from "@/app/types/CurrentConnectionProps";
 import ConnectWallet from "./ConnectWallet";
 import { ethers } from "ethers";
@@ -9,8 +9,8 @@ type UserAccountProps = {
     resetState: () => void;
     dismissNetworkError: React.MouseEventHandler<HTMLButtonElement>;
     networkError: string | undefined;
-    setCurrentConnection:React.Dispatch<React.SetStateAction<CurrentConnectionProps | undefined>>,
-    currentBalance:string|undefined
+    setCurrentConnection: React.Dispatch<React.SetStateAction<CurrentConnectionProps | undefined>>,
+    txBeingSent:string|undefined
 };
 
 const UserAccount:
@@ -21,9 +21,28 @@ const UserAccount:
         setNetworkError,
         resetState,
         setCurrentConnection,
-        currentBalance
+        txBeingSent
 
     }) => {
+        const [currentBalance, setCurrentBalance] = useState<string>();
+
+        useEffect(() => {
+            (async () => {
+              if (currentConnection?.provider && currentConnection.signer) {
+                setCurrentBalance(
+                  (
+                    await currentConnection.provider.getBalance(
+                      currentConnection.signer.address,
+                      await currentConnection.provider.getBlockNumber()
+                    )
+                  ).toString()
+        
+                )
+              }else{
+                setCurrentBalance(undefined);
+              }
+            })();
+          }, [currentConnection, txBeingSent])
         return (
             <div >
                 {!currentConnection?.signer && (
@@ -41,8 +60,8 @@ const UserAccount:
                     <p>Your address: {currentConnection.signer.address}</p>
                 )}
                 {currentBalance && (
-        <p>Your balance: {ethers.formatEther(currentBalance)} ETH</p>
-      )}
+                    <p>Your balance: {ethers.formatEther(currentBalance)} ETH</p>
+                )}
             </div>
         );
     };
