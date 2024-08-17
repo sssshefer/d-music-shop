@@ -12,6 +12,7 @@ import { CurrentConnectionProps } from "./types/CurrentConnectionProps";
 import useAddAlbum from "@/hooks/useAddAlbum";
 import AlbumsList from "@/components/AlbumsList";
 import AddAlbumForm from "@/components/AddAlbumForm";
+import useBuyAlbum from "@/hooks/useBuyAlbum";
 
 export default function Home() {
   const [networkError, setNetworkError] = useState<string>();
@@ -106,40 +107,17 @@ export default function Home() {
       event
     });
 
-  const handleBuyAlbum = async (
-    album: AlbumProps,
-    event: React.MouseEvent<HTMLButtonElement>
-  ) => {
-    event.preventDefault();
-
-    if (!currentConnection?.shop) {
-      return false;
-    }
-
-    try {
-      const buyTx = await currentConnection.shop.buy(album.index, { value: album.price });
-      setTxBeingSent(buyTx.hash);
-      await buyTx.wait();
-
-      setAlbums(
-        albums.map((a) => {
-          if (a.index === album.index) {
-            album.quantity =
-              BigInt(album.quantity) - BigInt(1);
-            return album;
-          } else {
-            return a;
-          }
-        })
-      );
-    } catch (err) {
-      console.error(err);
-
-      setTransactionError(err);
-    } finally {
-      setTxBeingSent(undefined);
-    }
-  };
+  const handleBuyAlbum = async (album:AlbumProps, event:FormEvent<HTMLFormElement>) =>
+    useBuyAlbum({
+      album,
+      albums,
+      currentConnection,
+      txBeingSent,
+      setTxBeingSent,
+      setTransactionError,
+      setAlbums,
+      event
+    })
 
   return (
     <main>
@@ -166,7 +144,7 @@ export default function Home() {
       <AlbumsList albums={albums} handleBuyAlbum={handleBuyAlbum} />
 
       {isOwner && !txBeingSent && (
-        <AddAlbumForm addAlbum={addAlbum}/>
+        <AddAlbumForm addAlbum={addAlbum} />
       )}
     </main>
   );
