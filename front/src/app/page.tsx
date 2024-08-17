@@ -23,11 +23,13 @@ type CurrentConnectionProps = {
   signer: ethers.JsonRpcSigner | undefined;
 };
 
+
 export default function Home() {
   const [networkError, setNetworkError] = useState<string>();
   const [transactionError, setTransactionError] = useState<any>();
   const [txBeingSent, setTxBeingSent] = useState<string>();
   const [currentBalance, setCurrentBalance] = useState<string>();
+  const [isOwner, setIsOwner] = useState<boolean>(false);
 
   const [currentConnection, setCurrentConnection] = useState<CurrentConnectionProps>();
 
@@ -45,6 +47,19 @@ export default function Home() {
       }
     })();
   }, [currentConnection, txBeingSent])
+
+  useEffect(() => {
+    (async () => {
+      if (currentConnection?.shop && currentConnection.signer) {
+        setIsOwner(
+          ethers.getAddress(
+            await currentConnection.shop.owner()
+          ) === await currentConnection.signer.getAddress()
+
+        )
+      }
+    })
+  }, [currentConnection])
 
   const _connectWallet = async () => {
     //check if metamask is installed in browser
@@ -117,6 +132,7 @@ export default function Home() {
     setTxBeingSent(undefined);
     setTransactionError(undefined);
     setCurrentBalance(undefined);
+    setIsOwner(false);
   };
 
   const _dismissNetworkError = () => {
@@ -135,6 +151,48 @@ export default function Home() {
 
     return error.message;
   };
+
+  const handleAddAlbum = async (event:FormEvent<HTMLFormElement>)=>{
+    event.preventDefault();
+
+    if(currentConnection?.shop){
+      return false;
+    }
+
+    const shop = currentConnection?.shop;
+    const formData = new FormData(event.currentTarget);
+
+    const title = formData.get("albumTitle")?.toString();
+    const price = formData.get("albumPrice")?.toString();
+    const quantity = formData.get("albumQty")?.toString();
+
+    if(title && price && quantity){
+      //uid is formed by hashing the name of the album
+      const uid = ethers.solidityPackedKeccak256(["string"], [title]);
+      try {
+        const index = await shop?.currentIndex();
+
+        const addTx = await shop?.addAlbum(
+          uid,
+          title,
+          BigInt(price),
+          BigInt(quantity)
+        );
+
+        setTxBeingSent(addTx?.hash);
+
+        await addTx?.wait();
+
+        
+      } catch (err) {
+        console.error(err);
+
+        setTransactionError(err);
+      } finally {
+        setTxBeingSent(undefined);
+      }
+    }
+  }
 
   return (
     <main>
@@ -158,6 +216,29 @@ export default function Home() {
       )}
       {currentBalance && (
         <p>Your balance: {ethers.formatEther(currentBalance)} ETH</p>
+      )}
+
+      {isOwner && !txBeingSent && (
+       <form onSubmit={handleAddAlbum}>
+       <h2>Add album</h2>
+
+       <label>
+         Title:
+         <input type="text" name="albumTitle" />
+       </label>
+
+       <label>
+         Price:
+         <input type="text" name="albumPrice" />
+       </label>
+
+       <label>
+         Quantity
+         <input type="text" name="albumQty" />
+       </label>
+
+       <input type="submit" value="Add!" />
+     </form>
       )}
     </main>
   );
