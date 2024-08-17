@@ -11,6 +11,7 @@ import { AlbumProps } from "./types/AlbumProps";
 import { CurrentConnectionProps } from "./types/CurrentConnectionProps";
 import useAddAlbum from "@/hooks/useAddAlbum";
 import AlbumsList from "@/components/AlbumsList";
+import AddAlbumForm from "@/components/AddAlbumForm";
 
 export default function Home() {
   const [networkError, setNetworkError] = useState<string>();
@@ -140,9 +141,6 @@ export default function Home() {
     }
   };
 
-
-
-
   return (
     <main>
       <UserAccount
@@ -165,30 +163,10 @@ export default function Home() {
         />
       }
 
-
       <AlbumsList albums={albums} handleBuyAlbum={handleBuyAlbum} />
-      
+
       {isOwner && !txBeingSent && (
-        <form onSubmit={addAlbum}>
-          <h2>Add album</h2>
-
-          <label>
-            Title:
-            <input type="text" name="albumTitle" />
-          </label>
-
-          <label>
-            Price:
-            <input type="text" name="albumPrice" />
-          </label>
-
-          <label>
-            Quantity:
-            <input type="text" name="albumQty" />
-          </label>
-
-          <input type="submit" value="Add!" />
-        </form>
+        <AddAlbumForm addAlbum={addAlbum}/>
       )}
     </main>
   );
