@@ -23,13 +23,20 @@ type CurrentConnectionProps = {
   signer: ethers.JsonRpcSigner | undefined;
 };
 
-
+type AlbumProps = {
+  index: ethers.BigNumberish;
+  uid: string;
+  title: string;
+  price: ethers.BigNumberish;
+  quantity: ethers.BigNumberish;
+};
 export default function Home() {
   const [networkError, setNetworkError] = useState<string>();
   const [transactionError, setTransactionError] = useState<any>();
   const [txBeingSent, setTxBeingSent] = useState<string>();
   const [currentBalance, setCurrentBalance] = useState<string>();
   const [isOwner, setIsOwner] = useState<boolean>(false);
+  const [albums, setAlbums] = useState<AlbumProps[]>([]);
 
   const [currentConnection, setCurrentConnection] = useState<CurrentConnectionProps>();
 
@@ -39,7 +46,8 @@ export default function Home() {
         setCurrentBalance(
           (
             await currentConnection.provider.getBalance(
-              currentConnection.signer.address
+              currentConnection.signer.address,
+              await currentConnection.provider.getBlockNumber()
             )
           ).toString()
 
@@ -51,16 +59,32 @@ export default function Home() {
   useEffect(() => {
     (async () => {
       if (currentConnection?.shop && currentConnection.signer) {
+        const newAlbums = (await currentConnection.shop.allAlbums()).map(
+          (album): AlbumProps => {
+            return {
+              index: album[0].toString(),
+              uid: album[1],
+              title: album[2],
+              price: album[3],
+              quantity: album[4],
+            };
+          }
+        );
+
+        setAlbums((albums) => [...albums, ...newAlbums]);
+
         setIsOwner(
-          ethers.getAddress(
-            await currentConnection.shop.owner()
-          ) === await currentConnection.signer.getAddress()
+          ethers.getAddress(await currentConnection.shop.owner()) ===
+           (await currentConnection.signer.getAddress())
 
         )
       }
-    })
+    })()
   }, [currentConnection])
 
+  useEffect(()=>{
+    console.log(isOwner, txBeingSent)
+  },[isOwner, txBeingSent])
   const _connectWallet = async () => {
     //check if metamask is installed in browser
     if (window.ethereum === undefined) {
@@ -133,6 +157,7 @@ export default function Home() {
     setTransactionError(undefined);
     setCurrentBalance(undefined);
     setIsOwner(false);
+    setAlbums([])
   };
 
   const _dismissNetworkError = () => {
@@ -152,10 +177,10 @@ export default function Home() {
     return error.message;
   };
 
-  const handleAddAlbum = async (event:FormEvent<HTMLFormElement>)=>{
+  const handleAddAlbum = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    if(currentConnection?.shop){
+    if (!currentConnection?.shop) {
       return false;
     }
 
@@ -166,9 +191,10 @@ export default function Home() {
     const price = formData.get("albumPrice")?.toString();
     const quantity = formData.get("albumQty")?.toString();
 
-    if(title && price && quantity){
+    if (title && price && quantity) {
       //uid is formed by hashing the name of the album
       const uid = ethers.solidityPackedKeccak256(["string"], [title]);
+
       try {
         const index = await shop?.currentIndex();
 
@@ -183,7 +209,16 @@ export default function Home() {
 
         await addTx?.wait();
 
-        
+        setAlbums((albums) => [
+          ...albums,
+          {
+            index,
+            uid,
+            title,
+            price,
+            quantity,
+          },
+        ]);
       } catch (err) {
         console.error(err);
 
@@ -193,6 +228,25 @@ export default function Home() {
       }
     }
   }
+
+  const availableAlbums = () => {
+    const albumsList = albums.map((album) => {
+      return (
+        <li key={album.uid}>
+          <>
+            {album.title} (#{album.index.toString()})<br />
+            Price: {album.price.toString()}
+            <br />
+            Qty: {album.quantity.toString()}
+            <br />
+           
+          </>
+        </li>
+      );
+    });
+
+    return albumsList;
+  };
 
   return (
     <main>
@@ -218,27 +272,29 @@ export default function Home() {
         <p>Your balance: {ethers.formatEther(currentBalance)} ETH</p>
       )}
 
+      {albums.length > 0 && <ul>{availableAlbums()}</ul>}
+
       {isOwner && !txBeingSent && (
-       <form onSubmit={handleAddAlbum}>
-       <h2>Add album</h2>
+        <form onSubmit={handleAddAlbum}>
+          <h2>Add album</h2>
 
-       <label>
-         Title:
-         <input type="text" name="albumTitle" />
-       </label>
+          <label>
+            Title:
+            <input type="text" name="albumTitle" />
+          </label>
 
-       <label>
-         Price:
-         <input type="text" name="albumPrice" />
-       </label>
+          <label>
+            Price:
+            <input type="text" name="albumPrice" />
+          </label>
 
-       <label>
-         Quantity
-         <input type="text" name="albumQty" />
-       </label>
+          <label>
+            Quantity:
+            <input type="text" name="albumQty" />
+          </label>
 
-       <input type="submit" value="Add!" />
-     </form>
+          <input type="submit" value="Add!" />
+        </form>
       )}
     </main>
   );
