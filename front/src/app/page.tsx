@@ -228,7 +228,40 @@ export default function Home() {
       }
     }
   }
+  const _handleBuyAlbum = async (
+    album: AlbumProps,
+    event: React.MouseEvent<HTMLButtonElement>
+  ) => {
+    event.preventDefault();
 
+    if (!currentConnection?.shop) {
+      return false;
+    }
+
+    try {
+      const buyTx = await currentConnection.shop.buy(album.index, { value: album.price });
+      setTxBeingSent(buyTx.hash);
+      await buyTx.wait();
+
+      setAlbums(
+        albums.map((a) => {
+          if (a.index === album.index) {
+            album.quantity =
+              BigInt(album.quantity) - BigInt(1);
+            return album;
+          } else {
+            return a;
+          }
+        })
+      );
+    } catch (err) {
+      console.error(err);
+
+      setTransactionError(err);
+    } finally {
+      setTxBeingSent(undefined);
+    }
+  };
   const availableAlbums = () => {
     const albumsList = albums.map((album) => {
       return (
@@ -239,7 +272,11 @@ export default function Home() {
             <br />
             Qty: {album.quantity.toString()}
             <br />
-           
+            {BigInt(album.quantity) > BigInt(0) && (
+              <button onClick={(e) => _handleBuyAlbum(album, e)}>
+                Buy 1 copy
+              </button>
+            )}
           </>
         </li>
       );
