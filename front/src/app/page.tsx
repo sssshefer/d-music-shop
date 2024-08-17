@@ -25,7 +25,26 @@ type CurrentConnectionProps = {
 
 export default function Home() {
   const [networkError, setNetworkError] = useState<string>();
+  const [transactionError, setTransactionError] = useState<any>();
+  const [txBeingSent, setTxBeingSent] = useState<string>();
+  const [currentBalance, setCurrentBalance] = useState<string>();
+
   const [currentConnection, setCurrentConnection] = useState<CurrentConnectionProps>();
+
+  useEffect(() => {
+    (async () => {
+      if (currentConnection?.provider && currentConnection.signer) {
+        setCurrentBalance(
+          (
+            await currentConnection.provider.getBalance(
+              currentConnection.signer.address
+            )
+          ).toString()
+
+        )
+      }
+    })();
+  }, [currentConnection, txBeingSent])
 
   const _connectWallet = async () => {
     //check if metamask is installed in browser
@@ -45,7 +64,7 @@ export default function Home() {
       method: "eth_requestAccounts",
     });
 
-    await _initialize(ethers.getAddress(selectedAccount));
+    await _initializeUser(ethers.getAddress(selectedAccount));
 
     window.ethereum.on(
       "accountsChanged",
@@ -54,7 +73,7 @@ export default function Home() {
           return _resetState();
         }
 
-        await _initialize(ethers.getAddress(newAccount));
+        await _initializeUser(ethers.getAddress(newAccount));
       }
     )
 
@@ -76,7 +95,7 @@ export default function Home() {
     return false;
   }
 
-  const _initialize = async (selectedAccount: string) => {
+  const _initializeUser = async (selectedAccount: string) => {
     const provider = new ethers.BrowserProvider(window.ethereum);
     const signer = await provider.getSigner(selectedAccount);
 
@@ -88,9 +107,58 @@ export default function Home() {
     });
   };
 
+  const _resetState = () => {
+    setNetworkError(undefined);
+    setCurrentConnection({
+      provider: undefined,
+      signer: undefined,
+      shop: undefined,
+    });
+    setTxBeingSent(undefined);
+    setTransactionError(undefined);
+    setCurrentBalance(undefined);
+  };
+
+  const _dismissNetworkError = () => {
+    setNetworkError(undefined);
+  };
+
+  const _dismissTransactionError = () => {
+    setTransactionError(undefined);
+  };
+
+  const _getRpcErrorMessage = (error: any): string => {
+    console.log(error);
+    if (error.data) {
+      return error.data.message;
+    }
+
+    return error.message;
+  };
+
   return (
     <main>
+      {!currentConnection?.signer && (
+        <ConnectWallet
+          connectWallet={_connectWallet}
+          networkError={networkError}
+          dismiss={_dismissNetworkError}
+        />
+      )}
 
+      {currentConnection?.signer && (
+        <p>Your address: {currentConnection.signer.address}</p>
+      )}
+      {txBeingSent && <WaitingForTransactionMessage txHash={txBeingSent} />}
+      {transactionError && (
+        <TransactionErrorMessage
+          message={_getRpcErrorMessage(transactionError)}
+          dismiss={_dismissTransactionError}
+        />
+      )}
+      {currentBalance && (
+        <p>Your balance: {ethers.formatEther(currentBalance)} ETH</p>
+      )}
     </main>
   );
 }
